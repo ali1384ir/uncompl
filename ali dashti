@@ -1,0 +1,207 @@
+```
+import pgzrun
+import os
+import random
+import keyboard
+import math
+import time
+import mouse
+from pgzhelper import *
+
+
+
+
+
+os.environ["SDL_VIDEO_CENTERED"] = '1'
+TITLE = "Football"
+WIDTH = 1000
+HEIGHT = 700
+
+#call images with Actor.
+stadium_1 = Actor('stadium_1', (500 , 350 ))
+stadium_2 = Actor('stadium_2', (500 , 350 ))
+player1 = Actor('player_1', (500, 620))
+player2 = Actor('player_2', (500, 90))
+player3 = Actor('player_3', (676.0, 252.0))
+ball = Actor('ball_1', (500, 350))
+goal = Actor('goal', (500.0, 15.0))
+end_time = Actor('winner_football_1', (500.0, 300.0))
+rule_1 = Actor('rule_football', (500.0, 350.0))
+button_1 = Actor('rule_button', (810.0, 110.0))
+button_1.images = ['rule_button_1','rule_button_2']
+button_1.fps = 30
+#button_2 = Actor('Exit_button1', (500.0, 350.0))
+
+#score get points random from here.
+point_list = random.randrange(1,3)
+
+#time_part.
+start_time = time.time()
+
+#score_part.
+score = 0
+
+#speed_part.
+speed_player_1 = 8
+speed_ball = 10
+speed_player_2 = 5
+speed_player_3 = 7
+
+#time_part.
+elapsed_time = time.time() - start_time
+minutes, seconds = divmod(elapsed_time, 60)
+
+#game over fales to when be needed.
+game_over = False
+# rule_1 = False
+mouse = False
+#button_2 = False
+
+# start using any def we need .
+def update():
+    #global all items we need to add in game
+    global player1, game_over, speed_player_1, ball, score, player2, speed_player_2, end_time, start_time, minutes, seconds, speed_player_3 , rule_1 , button_1, button_min
+
+    #only for short time , when project end , this will gone.
+    #print(f"position is: {player1.pos}")
+
+    # WHAT IF ... player1 ?
+    if keyboard.is_pressed('right'):
+        player1.x += speed_player_1
+    elif keyboard.is_pressed('left'):
+        player1.x -= speed_player_1
+    elif keyboard.is_pressed('up'):
+        player1.y -= speed_player_1
+    elif keyboard.is_pressed('down'):
+        player1.y += speed_player_1
+
+    player1.x = max(326, min(676, player1.x))
+    player1.y = max(76, min(629, player1.y))
+
+    # WHAT IF ... player2 ?
+    player2.x += speed_player_2 
+    player2.x = max(320, min(670, player2.x))
+    speed_player_2 *= -1 if player2.x in (320, 670) else 1
+    
+    # WHAT IF ... player3 ?
+    player3.x += speed_player_3
+    player3.x = max(500, min(676, player3.x))
+    speed_player_3 *= -1 if player3.x in (500, 676) else 1
+
+    ball.x = max(320, min(670, ball.x))
+
+    # WHAT IF ... player1 holding ball ?
+    if player1.colliderect(ball) and keyboard.is_pressed('space'):
+        player_x, player_y = player1.x, player1.y
+        ball.x = player_x + player1.width // -70 #here to put x pos of ball.
+        ball.y = player_y + player1.height // -2.5 #here to put y pos of ball.
+
+        vector_x = ball.x - player_x
+        vector_y = ball.y - player_y
+
+        vector_length = math.hypot(vector_x, vector_y)
+        if vector_length:
+            normalized_vector_x = vector_x / vector_length
+            normalized_vector_y = vector_y / vector_length
+
+            ball.x += normalized_vector_x * speed_ball
+            ball.y += normalized_vector_y * speed_ball
+
+    # WHAT IF ... ball touch goal ?
+    if ball.colliderect(goal):
+        score += point_list
+        ball.x, ball.y = 500, 350
+        player1.x, player1.y = 500, 620
+
+    # WHAT IF ...  ball touch player2 ?
+    if ball.colliderect(player2):
+        score -= 3
+        ball.x, ball.y = 500, 350
+        player1.x, player1.y = 500, 500
+
+    # WHAT IF ...  ball touch player3 ?
+    if ball.colliderect(player3):
+        score -= 2
+        ball.x, ball.y = 500, 350
+        player1.x, player1.y = 500, 500
+
+    
+    #its time to game_over , there is some limits.
+    if (time.time() - start_time) >= 60 or score >= 50 or score <= -50:
+        game_over = True
+        start_time = 0
+        speed_player_1 = False
+        speed_player_2 = False
+        speed_player_3 = False
+
+        if game_over:
+            if keyboard.is_pressed('enter'):
+                score = 0
+                start_time = time.time()
+                ball.x, ball.y = 500, 350
+                player1.x, player1.y = 500, 620
+                game_over = False
+                speed_player_1 = 8
+                speed_player_2 = 5
+                speed_player_3 = 7
+
+    elapsed_time = time.time() - start_time
+    minutes, seconds = divmod(elapsed_time, 60)
+    
+
+
+
+def draw():
+    global minutes , seconds
+    stadium_1.draw()
+    stadium_2.draw()
+    player1.draw()
+    player2.draw()
+    player3.draw()
+    ball.draw()
+    goal.draw()
+    button_1.draw()
+    #button_min.draw()
+    #rule_1.draw()
+    screen.draw.text(f"{int(minutes)}:{int(seconds)}", (880, 80), fontsize = 80, color = 'blue')
+    screen.draw.text(f"{score}", (890.0,580.0), fontsize = 80, color = 'green')
+    if game_over:
+        end_time.draw()
+        screen.draw.text(f"{score}", (540.0, 180.0), fontsize = 45, color = 'green')
+        
+        if not score >= 0 : 
+            screen.draw.text("You lost the match !", (415.0, 220.0), fontsize = 20, color = 'red')
+        elif score >= 0  : 
+            screen.draw.text("You won the match !", (415.0, 220.0), fontsize = 20, color = 'gold')
+        elif time == 60 and not score >= 1 :
+            screen.draw.text("You lost the match !", (415.0, 220.0), fontsize = 20, color = 'red')
+
+    if not score >= 0 :
+        screen.draw.text("..your score is going to fall , get up and fight.. !", (755.0, 550.0), fontsize = 15, color = 'white')
+
+def on_mouse_down(pos):
+    global mouse, rule_1, button_1
+    mouse = True
+    if rule_1.collidepoint(pos) :
+        print('f')
+    if mouse.click_left :
+        rule_1 = True
+        rule_1.draw()
+    else :
+        rule_1 = False
+
+
+
+def on_mouse_move(pos):
+    global mouse, rule_1, button_1
+
+    #mouse = True
+
+    #if mouse.collidepoint(button_1) :
+        
+    #    button_1.animate()
+    #    button_1 == button_1.images
+    # print(pos)
+#to run the code.
+pgzrun.go()
+```
